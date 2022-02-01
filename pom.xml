@@ -53,6 +53,12 @@
 	</profiles>
 	
 	<dependencies>
+		<!-- https://mvnrepository.com/artifact/org.jboss.spec.javax.websocket/jboss-websocket-api_1.1_spec -->
+		<dependency>
+			<groupId>org.jboss.spec.javax.websocket</groupId>
+			<artifactId>jboss-websocket-api_1.1_spec</artifactId>
+			<version>1.1.4.Final</version>
+		</dependency>
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>javax.servlet-api</artifactId>
