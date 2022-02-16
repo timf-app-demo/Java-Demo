@@ -1,0 +1,66 @@
+name: SAST
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  ws-sast:
+    name: ThunderScan
+    runs-on: ubuntu-latest
+    env:
+      THUNDERSCAN_SCAN_PARENT_ID: ${{github.event.repository.name}}
+      THUNDERSCAN_SCAN_NAME: ${{github.ref_name}}-${{github.sha}}
+      THUNDERSCAN_AUTO_CREATE_PARENT: true
+      THUNDERSCAN_API_TOKEN: ${{secrets.THUNDERSCAN_TOKEN}}
+      THUNDERSCAN_API_URL: ${{secrets.THUNDERSCAN_URL}}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      # Download ThunderScan CLI
+      - name: Download ThunderScan CLI
+        run: |
+          mkdir /opt/thunderscan && curl -LJO https://download.defensecode.com/latest/clients/tscli.tar.gz
+          tar -C /opt/thunderscan -xzf ./tscli.tar.gz && rm tscli.tar.gz
+      # Run ThunderScan CLI
+      - name: Run Thunderscan SAST
+        run: |
+          export THUNDERSCAN_ALM_TRIGGER_ID=$(curl -H "X-Auth-Token: ${THUNDERSCAN_API_TOKEN}" --request GET ${THUNDERSCAN_API_URL}"/api/config/github/triggers" | jq -r '.[] | select(.name=="GH_Summary_Java-Demo").id')
+          /opt/thunderscan/tscli --git ${{github.server_url}}/${{github.repository}} --branch ${{github.ref_name}} \
+          --report --formats "html,json,sarif" --filename ThunderScan-Report
+
+      # Upload ThunderScan Results to Github Security
+      - name: Github Security Results Upload
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: ThunderScan-Report.sarif
+      # Publish ThunderScan Results
+      - name: Upload TS Results
+        uses: actions/upload-artifact@v2
+        with:
+          name: TS Results
+          path: ThunderScan-Report.html
+          retention-days: 1
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      # CodeQL
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: 'java'
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v1
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v1
+      - name: 'Upload CodeQL sarif'
+        uses: actions/upload-artifact@v2
+        with:
+          name: CodeQL-sarif
+          path: /home/runner/work/${{ github.event.repository.name }}/results/java.sarif
+          retention-days: 1
