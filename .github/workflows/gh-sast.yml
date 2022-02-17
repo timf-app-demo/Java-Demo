@@ -18,6 +18,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+      # new comment
       # Download ThunderScan CLI
       - name: Download ThunderScan CLI
         run: |
