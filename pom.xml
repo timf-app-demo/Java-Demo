@@ -53,6 +53,11 @@
 	</profiles>
 	
 	<dependencies>
+		<dependency>
+			<groupId>org.owasp.esapi</groupId>
+			<artifactId>esapi</artifactId>
+			<version>2.1.0.1</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.jboss.spec.javax.websocket/jboss-websocket-api_1.1_spec -->
 		<dependency>
 			<groupId>org.jboss.spec.javax.websocket</groupId>
