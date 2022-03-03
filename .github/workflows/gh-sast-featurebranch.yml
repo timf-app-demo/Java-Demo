@@ -1,0 +1,48 @@
+name: WhiteSource SAST Feature Branch Scan
+
+on:
+  push:
+    branches:
+      - feature/*
+      - hotfix/*
+
+jobs:
+  feature-ws-sast:
+    name: WS-SAST feature branch scan
+    runs-on: ubuntu-latest
+    env:
+      THUNDERSCAN_SCAN_PARENT_ID: ${{github.event.repository.name}}
+      THUNDERSCAN_SCAN_NAME: ${{github.ref_name}}-${{github.sha}}
+      THUNDERSCAN_AUTO_CREATE_PARENT: true
+      THUNDERSCAN_API_TOKEN: ${{secrets.THUNDERSCAN_TOKEN}}
+      THUNDERSCAN_API_URL: ${{secrets.THUNDERSCAN_URL}}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      # Download ThunderScan CLI
+      - name: Download ThunderScan CLI
+        run: |
+          mkdir /opt/thunderscan && curl -LJO https://download.defensecode.com/latest/clients/tscli.tar.gz
+          tar -C /opt/thunderscan -xzf ./tscli.tar.gz && rm tscli.tar.gz
+      # Run ThunderScan CLI
+      - name: Run Thunderscan SAST
+        run: |
+          /opt/thunderscan/tscli --git ${{github.server_url}}/${{github.repository}} --branch ${{github.ref_name}} \
+          --report --formats "html,json,sarif" --filename ThunderScan-Report
+      # Publish ThunderScan Results
+      - name: Upload TS Results
+        uses: actions/upload-artifact@v2
+        with:
+          name: TS Results
+          path: |
+            ThunderScan-Report.html
+            ThunderScan-Report.json
+            ThunderScan-Report.sarif
+          retention-days: 1
+      # Find & Delete Scan
+      - name: Delete Feature Branch Scan
+        run: |
+          SCAN_ID=$(curl -H "X-Auth-Token: $THUNDERSCAN_API_TOKEN" $THUNDERSCAN_API_URL"/api/scans?query="$THUNDERSCAN_SCAN_NAME | jq -r '.[].id')
+          echo $SCAN_ID "is Scan ID"
+          curl -H "X-Auth-Token: $THUNDERSCAN_API_TOKEN" --request DELETE $THUNDERSCAN_API_URL"/api/scans/"$SCAN_ID
