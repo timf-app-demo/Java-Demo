@@ -50,7 +50,7 @@ jobs:
           
       - name: Generate WhiteSource SPDX Report
         env:
-          WS_WSS_URL: https://app.whitesourcesoftware.com/agent
+          WS_WSS_URL: https://saas.whitesourcesoftware.com/agent
         run: |
             export WS_PROJECTTOKEN=$(jq -r '.projects | .[] | .projectToken' ./whitesource/scanProjectDetails.json)
             echo WS_PROJECTTOKEN: $WS_PROJECTTOKEN
@@ -88,3 +88,4 @@ jobs:
         with:
            name: WhiteSource SPDX report
            path: ${{github.workspace}}/whitesource-spdx
+
